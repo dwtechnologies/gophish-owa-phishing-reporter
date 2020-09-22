@@ -1,0 +1,8 @@
+{
+  "ShowLog": false,
+  "Headers": ["", ""],
+  "Contents": [""],
+  "Emails": ["support@danielwellington.com"],
+  "ApiUrls": ["{url}/report?rid={rid}"]
+}
+
