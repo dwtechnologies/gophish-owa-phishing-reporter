@@ -164,7 +164,7 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
     }
 
     //check for Gophish email
-    let regexp = new RegExp("http.*rid([^'\"]+)", "i");
+    let regexp = new RegExp("http:.*rid([^'\"]+)", "i");
     var match = regexp.exec(mailData.bodyHtml);
     let isGophish = match?.length > 0;
 
