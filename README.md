@@ -24,7 +24,7 @@ Add add-in from a URL or file in Outlook.
 
 4.Select Add a custom add-in, then add the manifest.xml either by using Add from URL or Add from file.
 
-##Installing for entire organization.
+## Installing for entire organization.
 
 1.Go to Exchange admin.
 
@@ -33,7 +33,7 @@ Add add-in from a URL or file in Outlook.
 3. Add manifest.xml as URL or file.
 
 
-##Development.
+## Development.
 
 1.Clone repo.
 
