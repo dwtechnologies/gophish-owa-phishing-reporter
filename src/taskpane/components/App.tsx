@@ -61,6 +61,7 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
   const [reason, setReason] = useState("content");
   const [mailState, setMailState] = useState({ isSafe: true, isGophish: false, isReported: false });
   const [mailData, setMailData] = useState({ from: "", subject: "", body: "", bodyHtml: "" });
+  const [mailFile, setMailFile] = useState("");
   const { title, isOfficeInitialized } = prop;
   const [otherReason, setOtherReason] = useState("");
   const logInput = useRef(null);
@@ -141,6 +142,8 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
         writeLog("Load body Error: " + result.error);
       }
     });
+    
+    getEmailAsFile();
   };
 
   const checkContent = () => {
@@ -277,6 +280,49 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
       );
     }
   };
+  
+  const getEmailAsFile = async ()=> {
+    writeLog("get Email as file: ");
+
+    Office.context.mailbox.getCallbackTokenAsync({ isRest: true }, async function(result) {
+      if (result.status === Office.AsyncResultStatus.Succeeded) {
+        var accessToken = result.value;
+        writeLog("accessToken: OK");
+
+        const itemId = getItemRestId();
+        const api = Office.context.mailbox.restUrl + "/v2.0/me/messages/" + itemId;
+
+        const param = {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + accessToken
+          }
+        };
+
+        writeLog(param);
+
+        try {
+          const response = await fetch(api, param);
+          writeLog("status" + response.status);
+
+          if (response.status === 200 || response.status === 202) {
+            const data = await response.text();
+
+            setMailFile(data)
+            // writeLog(data);
+          } else {
+            writeLog("Error: " + response.statusText);
+          }
+        } catch (error) {
+          writeLog("catch getEmailAsFile");
+          if (error) writeLog(error);
+        }
+      } else {
+        writeLog("not access token");
+      }
+    });
+  };
 
   const sendEmails = async () => {
     writeLog("send Emails: ");
@@ -286,8 +332,7 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
         var accessToken = result.value;
         writeLog("accessToken: OK");
 
-        const itemId = getItemRestId();
-        const api = Office.context.mailbox.restUrl + "/v2.0/me/messages/" + itemId + "/forward";
+        const api = Office.context.mailbox.restUrl + "/v2.0/me/sendmail";
         let comment = "Reason: ";
 
         if (reason === "sender") comment += "suspicious sender";
@@ -303,14 +348,28 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
               Authorization: "Bearer " + accessToken
             },
             body: JSON.stringify({
-              Comment: comment,
-              ToRecipients: [
-                {
-                  EmailAddress: {
-                    Address: appSettings.Emails[i]
+              Message: {
+                Subject: "Email to annalise",
+                Body: {
+                  ContentType: "Text",
+                  Content: comment
+                },
+                ToRecipients: [
+                  {
+                    EmailAddress: {
+                      Address: appSettings.Emails[i]
+                    }
                   }
-                }
-              ]
+                ],
+                Attachments: [
+                  {
+                    "@odata.type": "#Microsoft.OutlookServices.FileAttachment",
+                    Name: "email.txt",
+                    ContentBytes: btoa(mailFile)
+                  }
+                ]
+              },
+              SaveToSentItems: "false"
             })
           };
 
