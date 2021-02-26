@@ -129,10 +129,10 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
           if (result.status === Office.AsyncResultStatus.Succeeded) {
             // @ts-ignore
             tmp = result.value;
-            console.log("bodyHtml:");
+            // console.log("bodyHtml:");
             // @ts-ignore
-            console.log(tmp);
-            
+            // console.log(tmp);
+
             setMailData({ from: tmpFrom, subject: tmpSubject, body: tmpBody, bodyHtml: result.value });
           } else {
             writeLog("Load body html Error: " + result.error);
@@ -142,8 +142,9 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
         writeLog("Load body Error: " + result.error);
       }
     });
-    
-    getEmailAsFile();
+
+    getEWSEmailAsFile();
+    // getEmailAsFile();
   };
 
   const checkContent = () => {
@@ -199,7 +200,7 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
     let rid = "";
 
     let regexp = new RegExp("http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", "igm");
-    var match = mailData.bodyHtml.match(regexp); 
+    var match = mailData.bodyHtml.match(regexp);
     writeLog("match: " + match.length);
 
     // http://phish_server/?rid=1234567
@@ -237,7 +238,7 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
 
       try {
         const proxyurl = "https://cors-anywhere.herokuapp.com/";
-        const response = await fetch(proxyurl + apiUrl, { method: "GET"});
+        const response = await fetch(proxyurl + apiUrl, { method: "GET" });
 
         if (response.status === 200) {
           const data = await response.text();
@@ -252,7 +253,7 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
         writeLog("try send (no-cors) to: " + apiUrl);
         try {
           const proxyurl = "https://cors-anywhere.herokuapp.com/";
-          const response = await fetch(proxyurl + apiUrl, { method: "GET"});
+          const response = await fetch(proxyurl + apiUrl, { method: "GET" });
 
           if (response.status === 200) {
             const data = await response.text();
@@ -280,47 +281,40 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
       );
     }
   };
-  
-  const getEmailAsFile = async ()=> {
-    writeLog("get Email as file: ");
 
-    Office.context.mailbox.getCallbackTokenAsync({ isRest: true }, async function(result) {
-      if (result.status === Office.AsyncResultStatus.Succeeded) {
-        var accessToken = result.value;
-        writeLog("accessToken: OK");
+  const getEWSEmailAsFile = async () => {
+    writeLog("get EWS Email as file: ");
 
-        const itemId = getItemRestId();
-        const api = Office.context.mailbox.restUrl + "/v2.0/me/messages/" + itemId;
+    var ewsId = Office.context.mailbox.item.itemId;
+    var request =
+      '<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">' +
+      '  <soap:Header><t:RequestServerVersion Version="Exchange2013" /></soap:Header>' +
+      "  <soap:Body>" +
+      "    <m:GetItem>" +
+      "      <m:ItemShape>" +
+      // "        <t:BaseShape>Default</t:BaseShape>" +
+      "        <t:BaseShape>IdOnly</t:BaseShape>' +" +
+      "        <t:IncludeMimeContent>true</t:IncludeMimeContent>" +
+      // "        <t:BodyType>Text</t:BodyType>" +
+      "      </m:ItemShape >" +
+      "      <m:ItemIds>" +
+      '        <t:ItemId Id="' +
+      ewsId +
+      '" />' +
+      "      </m:ItemIds>" +
+      "    </m:GetItem>" +
+      "  </soap:Body>" +
+      "</soap:Envelope>";
 
-        const param = {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + accessToken
-          }
-        };
+    Office.context.mailbox.makeEwsRequestAsync(request, function(result) {
+      writeLog("EWS result:" + result.status);
 
-        writeLog(param);
+      var parser = new DOMParser();
+      var doc = parser.parseFromString(result.value, "text/xml");
+      var values = doc.getElementsByTagName("t:MimeContent");
 
-        try {
-          const response = await fetch(api, param);
-          writeLog("status" + response.status);
-
-          if (response.status === 200 || response.status === 202) {
-            const data = await response.text();
-
-            setMailFile(data)
-            // writeLog(data);
-          } else {
-            writeLog("Error: " + response.statusText);
-          }
-        } catch (error) {
-          writeLog("catch getEmailAsFile");
-          if (error) writeLog(error);
-        }
-      } else {
-        writeLog("not access token");
-      }
+      writeLog(atob(values[0].textContent));
+      setMailFile(values[0].textContent);
     });
   };
 
@@ -341,41 +335,41 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
         if (reason === "other") comment += otherReason;
 
         for (let i = 0; i < appSettings?.Emails.length; i++) {
-          const param = {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + accessToken
-            },
-            body: JSON.stringify({
-              Message: {
-                Subject: "Email to annalise",
-                Body: {
-                  ContentType: "Text",
-                  Content: comment
-                },
-                ToRecipients: [
-                  {
-                    EmailAddress: {
-                      Address: appSettings.Emails[i]
-                    }
-                  }
-                ],
-                Attachments: [
-                  {
-                    "@odata.type": "#Microsoft.OutlookServices.FileAttachment",
-                    Name: "email.txt",
-                    ContentBytes: btoa(mailFile)
-                  }
-                ]
-              },
-              SaveToSentItems: "false"
-            })
-          };
-
-          writeLog(param);
-
           try {
+            const param = {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + accessToken
+              },
+              body: JSON.stringify({
+                Message: {
+                  Subject: "Email to annalise",
+                  Body: {
+                    ContentType: "Text",
+                    Content: comment
+                  },
+                  ToRecipients: [
+                    {
+                      EmailAddress: {
+                        Address: appSettings.Emails[i]
+                      }
+                    }
+                  ],
+                  Attachments: [
+                    {
+                      "@odata.type": "#Microsoft.OutlookServices.FileAttachment",
+                      Name: "email.eml",
+                      ContentBytes: mailFile
+                    }
+                  ]
+                },
+                SaveToSentItems: "false"
+              })
+            };
+
+            // writeLog(param);
+
             const response = await fetch(api, param);
             writeLog("status" + response.status);
 
@@ -568,18 +562,17 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
     }
   };
 
-
- // http://phish_server/?rid=1234567
+  // http://phish_server/?rid=1234567
   // http://phish_server/report?rid=1234567
   //@ts-ignore
   const getGophishLink = (text: any): string => {
     let ret = "";
 
-    text.indexOf("")
+    text.indexOf("");
 
     return ret;
   };
-  
+
   if (!isOfficeInitialized || appSettings === null) {
     return (
       <Progress title={title} logo="assets/logo-filled.png" message="Please sideload your addin to see app body." />
