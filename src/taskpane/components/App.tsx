@@ -61,6 +61,7 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
   const [reason, setReason] = useState("content");
   const [mailState, setMailState] = useState({ isSafe: true, isGophish: false, isReported: false });
   const [mailData, setMailData] = useState({ from: "", subject: "", body: "", bodyHtml: "" });
+  const [mailFile, setMailFile] = useState("");
   const { title, isOfficeInitialized } = prop;
   const [otherReason, setOtherReason] = useState("");
   const logInput = useRef(null);
@@ -128,10 +129,10 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
           if (result.status === Office.AsyncResultStatus.Succeeded) {
             // @ts-ignore
             tmp = result.value;
-            console.log("bodyHtml:");
+            // console.log("bodyHtml:");
             // @ts-ignore
-            console.log(tmp);
-            
+            // console.log(tmp);
+
             setMailData({ from: tmpFrom, subject: tmpSubject, body: tmpBody, bodyHtml: result.value });
           } else {
             writeLog("Load body html Error: " + result.error);
@@ -141,6 +142,9 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
         writeLog("Load body Error: " + result.error);
       }
     });
+
+    getEWSEmailAsFile();
+    // getEmailAsFile();
   };
 
   const checkContent = () => {
@@ -196,7 +200,7 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
     let rid = "";
 
     let regexp = new RegExp("http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", "igm");
-    var match = mailData.bodyHtml.match(regexp); 
+    var match = mailData.bodyHtml.match(regexp);
     writeLog("match: " + match.length);
 
     // http://phish_server/?rid=1234567
@@ -233,10 +237,12 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
       writeLog("try send to: " + apiUrl);
 
       try {
-        const proxyurl = "https://cors-anywhere.herokuapp.com/";
-        const response = await fetch(proxyurl + apiUrl, { method: "GET"});
+        const response = await fetch(apiUrl, { method: "GET", mode: "no-cors"});
+        //Use if CORS error 
+        //const proxyurl = "https://your-corsanywhere.server.com/";
+        //const response = await fetch(proxyurl + apiUrl, { method: "GET"});
 
-        if (response.status === 200) {
+        if (response.status === 204) {
           const data = await response.text();
           writeLog("OK: " + data);
         } else {
@@ -248,10 +254,12 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
 
         writeLog("try send (no-cors) to: " + apiUrl);
         try {
-          const proxyurl = "https://cors-anywhere.herokuapp.com/";
-          const response = await fetch(proxyurl + apiUrl, { method: "GET"});
+          const response = await fetch(apiUrl, { method: "GET", mode: "no-cors"});
+          //Use if CORS error 
+          //const proxyurl = "https://your-corsanywhere.server.com/";
+          //const response = await fetch(proxyurl + apiUrl, { method: "GET"});
 
-          if (response.status === 200) {
+          if (response.status === 204) {
             const data = await response.text();
             writeLog("OK: " + data);
           } else {
@@ -278,6 +286,42 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
     }
   };
 
+  const getEWSEmailAsFile = async () => {
+    writeLog("get EWS Email as file: ");
+
+    var ewsId = Office.context.mailbox.item.itemId;
+    var request =
+      '<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">' +
+      '  <soap:Header><t:RequestServerVersion Version="Exchange2013" /></soap:Header>' +
+      "  <soap:Body>" +
+      "    <m:GetItem>" +
+      "      <m:ItemShape>" +
+      // "        <t:BaseShape>Default</t:BaseShape>" +
+      "        <t:BaseShape>IdOnly</t:BaseShape>' +" +
+      "        <t:IncludeMimeContent>true</t:IncludeMimeContent>" +
+      // "        <t:BodyType>Text</t:BodyType>" +
+      "      </m:ItemShape >" +
+      "      <m:ItemIds>" +
+      '        <t:ItemId Id="' +
+      ewsId +
+      '" />' +
+      "      </m:ItemIds>" +
+      "    </m:GetItem>" +
+      "  </soap:Body>" +
+      "</soap:Envelope>";
+
+    Office.context.mailbox.makeEwsRequestAsync(request, function(result) {
+      writeLog("EWS result:" + result.status);
+
+      var parser = new DOMParser();
+      var doc = parser.parseFromString(result.value, "text/xml");
+      var values = doc.getElementsByTagName("t:MimeContent");
+
+      writeLog(atob(values[0].textContent));
+      setMailFile(values[0].textContent);
+    });
+  };
+
   const sendEmails = async () => {
     writeLog("send Emails: ");
 
@@ -286,8 +330,7 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
         var accessToken = result.value;
         writeLog("accessToken: OK");
 
-        const itemId = getItemRestId();
-        const api = Office.context.mailbox.restUrl + "/v2.0/me/messages/" + itemId + "/forward";
+        const api = Office.context.mailbox.restUrl + "/v2.0/me/sendmail";
         let comment = "Reason: ";
 
         if (reason === "sender") comment += "suspicious sender";
@@ -296,27 +339,41 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
         if (reason === "other") comment += otherReason;
 
         for (let i = 0; i < appSettings?.Emails.length; i++) {
-          const param = {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + accessToken
-            },
-            body: JSON.stringify({
-              Comment: comment,
-              ToRecipients: [
-                {
-                  EmailAddress: {
-                    Address: appSettings.Emails[i]
-                  }
-                }
-              ]
-            })
-          };
-
-          writeLog(param);
-
           try {
+            const param = {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + accessToken
+              },
+              body: JSON.stringify({
+                Message: {
+                  Subject: "Email to analyze",
+                  Body: {
+                    ContentType: "Text",
+                    Content: comment
+                  },
+                  ToRecipients: [
+                    {
+                      EmailAddress: {
+                        Address: appSettings.Emails[i]
+                      }
+                    }
+                  ],
+                  Attachments: [
+                    {
+                      "@odata.type": "#Microsoft.OutlookServices.FileAttachment",
+                      Name: "email.eml",
+                      ContentBytes: mailFile
+                    }
+                  ]
+                },
+                SaveToSentItems: "false"
+              })
+            };
+
+            // writeLog(param);
+
             const response = await fetch(api, param);
             writeLog("status" + response.status);
 
@@ -404,7 +461,7 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
     let ret = (
       <Fabric>
         <FontIcon iconName="MailTentative" className={classNames.red} />
-        <Label>Please send report if it is phishing email</Label>
+        <Label>Choose a reason below and click the "send report" button</Label>
       </Fabric>
     );
 
@@ -430,7 +487,7 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
       ret = (
         <Fabric>
           <FontIcon iconName="MailCheck" className={classNames.green} />
-          <Label>God job! You have successfully spotted a Phishing attempt.</Label>
+          <Label>Good job! You have successfully spotted a Phishing attempt.</Label>
         </Fabric>
       );
     }
@@ -464,7 +521,7 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
                 defaultSelectedKey={reason}
                 options={options}
                 onChange={onChangeOption}
-                label="Chose reason"
+                label="Reason"
                 required={true}
               />
             </Stack.Item>
@@ -509,18 +566,17 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
     }
   };
 
-
- // http://phish_server/?rid=1234567
+  // http://phish_server/?rid=1234567
   // http://phish_server/report?rid=1234567
   //@ts-ignore
   const getGophishLink = (text: any): string => {
     let ret = "";
 
-    text.indexOf("")
+    text.indexOf("");
 
     return ret;
   };
-  
+
   if (!isOfficeInitialized || appSettings === null) {
     return (
       <Progress title={title} logo="assets/logo-filled.png" message="Please sideload your addin to see app body." />

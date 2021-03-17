@@ -2,7 +2,7 @@
   "ShowLog": false,
   "Headers": ["", ""],
   "Contents": [""],
-  "Emails": ["support@danielwellington.com"],
+  "Emails": ["email@yourdomain.com"],
   "ApiUrls": ["{url}/report?rid={rid}"]
 }
 
