@@ -7,7 +7,6 @@
 * [Debugging](#Debugging)
 
 ## General info
-<<<<<<< HEAD
 This plugin makes it easy to report phishing for end-users. It will report using the native report function in gophish if it is a gophish phishing mail, if not it will forwared the reported email. 
 
 
@@ -18,18 +17,6 @@ This template is written using [TypeScript](http://www.typescriptlang.org/). For
 ## Setup
 1.Clone repo:
 
-=======
-This plugin makes it easy to report phishing for end-users. It will report using the native report function in gophish if it is a gophish phishing mail, if not it will capture all headers and content and send it to a mail defined where a security team can take a closer look.
-This project is simple Lorem ipsum dolor generator.
-
-## Code
-This template is written using [TypeScript](http://www.typescriptlang.org/). For the JavaScript version of this template, go to [Office-Addin-TaskPane-React-JS](https://github.com/OfficeDev/Office-Addin-TaskPane-React-JS)
-	
-	
-## Setup
-1.Clone repo:
-
->>>>>>> deb35b5eb59c8a407be06190ef4c0982d1403d57
 ```
 $ git clone https://github.com/dwtechnologies/gophish-owa-phishing-reporter.git
 
