@@ -13,8 +13,10 @@
   <HighResolutionIconUrl DefaultValue="https://dw-secfiles-public.s3-eu-west-1.amazonaws.com/Phishing-Report-master/assets/icon-80.png"/>
   <SupportUrl DefaultValue="https://danielwellington.com"/>
   <AppDomains>
-    <AppDomain>danielwellington.com</AppDomain>
-  </AppDomains>
+    <AppDomain>https://danielwellington.com</AppDomain>
+    <AppDomain>http://ec2-13-53-44-128.eu-north-1.compute.amazonaws.com/</AppDomain>
+    <AppDomain>https://ec2-13-48-196-161.eu-north-1.compute.amazonaws.com/</AppDomain>
+</AppDomains>
   <Hosts>
     <Host Name="Mailbox"/>
   </Hosts>

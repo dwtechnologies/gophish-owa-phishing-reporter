@@ -237,10 +237,12 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
       writeLog("try send to: " + apiUrl);
 
       try {
-        const proxyurl = "https://cors-anywhere.herokuapp.com/";
-        const response = await fetch(proxyurl + apiUrl, { method: "GET" });
+        const response = await fetch(apiUrl, { method: "GET", mode: "no-cors"});
+        //Use if CORS error 
+        //const proxyurl = "https://your-corsanywhere.server.com/";
+        //const response = await fetch(proxyurl + apiUrl, { method: "GET"});
 
-        if (response.status === 200) {
+        if (response.status === 204) {
           const data = await response.text();
           writeLog("OK: " + data);
         } else {
@@ -252,10 +254,12 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
 
         writeLog("try send (no-cors) to: " + apiUrl);
         try {
-          const proxyurl = "https://cors-anywhere.herokuapp.com/";
-          const response = await fetch(proxyurl + apiUrl, { method: "GET" });
+          const response = await fetch(apiUrl, { method: "GET", mode: "no-cors"});
+          //Use if CORS error 
+          //const proxyurl = "https://your-corsanywhere.server.com/";
+          //const response = await fetch(proxyurl + apiUrl, { method: "GET"});
 
-          if (response.status === 200) {
+          if (response.status === 204) {
             const data = await response.text();
             writeLog("OK: " + data);
           } else {
@@ -344,7 +348,7 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
               },
               body: JSON.stringify({
                 Message: {
-                  Subject: "Email to annalise",
+                  Subject: "Email to analyze",
                   Body: {
                     ContentType: "Text",
                     Content: comment
@@ -457,7 +461,7 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
     let ret = (
       <Fabric>
         <FontIcon iconName="MailTentative" className={classNames.red} />
-        <Label>Please send report if it is phishing email</Label>
+        <Label>Choose a reason below and click the "send report" button</Label>
       </Fabric>
     );
 
@@ -483,7 +487,7 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
       ret = (
         <Fabric>
           <FontIcon iconName="MailCheck" className={classNames.green} />
-          <Label>God job! You have successfully spotted a Phishing attempt.</Label>
+          <Label>Good job! You have successfully spotted a Phishing attempt.</Label>
         </Fabric>
       );
     }
@@ -517,7 +521,7 @@ export const App: React.FC<AppProps> = (prop: AppProps) => {
                 defaultSelectedKey={reason}
                 options={options}
                 onChange={onChangeOption}
-                label="Chose reason"
+                label="Reason"
                 required={true}
               />
             </Stack.Item>
