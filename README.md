@@ -55,7 +55,8 @@ $ npm run build
 
 1.Go to Office 365 admin.
 
-2.Settings > Add-in > Deploy Add-in > Upload Custom apps.
+2.Settings > Integrated apps > upload custom apps (scree screenshot bellow)
+<img src=doc/office365-admin-plugin.png>
 
 3.Add manifest.xml as URL or file.
 
