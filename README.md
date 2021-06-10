@@ -8,7 +8,7 @@
 * [Todo](#Todo)
 
 ## General info
-This plugin makes it easy to report phishing emails for end-users. The reporter will recongize URLs within the email in the standard gophish format and forward these to the gophish report function. Reported emails which do not match the gophish format will be forwarded to an email adress specfied in the settings. It works in all outlook clients (android, ios, macos, windows & web outlook) and a demo bellow. 
+This plugin makes it easy to report phishing emails for end-users. The reporter will recongize URLs within the email in the standard gophish format and forward these to the gophish report function. Reported emails which do not match the gophish format will be forwarded to an email adress specfied in the settings with any comments and the raw mail with all headers. It works in all outlook clients (android, ios, macos, windows & web outlook) and a demo bellow. 
 <img src=doc/outlook-gophish-reporter-plugin.gif>
 
 
@@ -23,7 +23,13 @@ This template is written using [TypeScript](http://www.typescriptlang.org/). For
 $ git clone https://github.com/dwtechnologies/gophish-owa-phishing-reporter.git
 
 ```
-2. Make your changes to App.tsx for example change the regular expression to match  other URLs than the default gophish format  "http://phish_server/?rid=1234567" and build. 
+2. Make any needed adjustments
+
+2.1 In App.tsx you can for example change the regular expression to match  other URLs than the default gophish format  "http://phish_server/?rid=1234567"
+
+2.2 Adjust settings in src/settings.json (destination mail etc)
+
+2.3 Do the build.
 ```
 $ npm run build
 
