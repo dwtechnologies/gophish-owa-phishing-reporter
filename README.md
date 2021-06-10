@@ -5,9 +5,10 @@
 * [Install local](#Test-the-plugin-(in-outlook-web-client))
 * [Install org](#Deploy-to-all)
 * [Debugging](#Debugging)
+* [Todo](#Todo)
 
 ## General info
-This plugin makes it easy to report phishing for end-users. It will report using the native report function in gophish if it is a gophish phishing mail, if not it will forwared the reported email. It works in all outlook clients (android, ios, macos, windows & web outlook) and a demo bellow,
+This plugin makes it easy to report phishing emails for end-users. The reporter will recongize URLs within the email in the standard gophish format and forward these to the gophish report function. Reported emails which do not match the gophish format will be forwarded to an email adress specfied in the settings. It works in all outlook clients (android, ios, macos, windows & web outlook) and a demo bellow. 
 <img src=doc/outlook-gophish-reporter-plugin.gif>
 
 
@@ -22,8 +23,7 @@ This template is written using [TypeScript](http://www.typescriptlang.org/). For
 $ git clone https://github.com/dwtechnologies/gophish-owa-phishing-reporter.git
 
 ```
-2.Make your changes and build
-
+2. Make your changes to App.tsx for example change the regular expression to match  other URLs than the default gophish format  "http://phish_server/?rid=1234567" and build. 
 ```
 $ npm run build
 
@@ -35,7 +35,6 @@ $ npm run build
 4.1 Take a look and change the IconUrl
 
 4.2 Change the SourceLocaion to match the static hosting
-
 
 
 ## Test the plugin (in outlook web client)
@@ -77,7 +76,7 @@ Edit the settings.json in the outlook client folder to set debug to true
 If you use the web version of outlook (OWA), then the browser developer tools / console (F12) is your friend.
 
 
-# Todo
+## Todo
 * When reporting "spam/marketing", use office365 junk flagging function
 * When reporting suspicious sender or other reason, use following API's before sending raw mail
 * * One or several api's from https://zeltser.com/lookup-malicious-websites/
